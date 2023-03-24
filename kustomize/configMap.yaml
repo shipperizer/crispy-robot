@@ -1,0 +1,8 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: crispy-robot
+data:
+  ETCD_PASSWORD: "1MujowixEW"
+  ETCD_ENDPOINTS: "etcd.default.svc.cluster.local:2379"

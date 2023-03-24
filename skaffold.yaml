@@ -1,0 +1,51 @@
+apiVersion: skaffold/v3
+kind: Config
+build:
+  artifacts:
+  - image: ghcr.io/shipperizer/crispy-robot-test
+    context: .
+    platforms:
+      - "linux/amd64"
+      - "linux/arm64"
+    docker: 
+      dockerfile: Dockerfile
+      buildArgs:
+        app_name: test
+  - image: ghcr.io/shipperizer/crispy-robot-web
+    context: .
+    platforms:
+      - "linux/amd64"
+      - "linux/arm64"
+    docker: 
+      dockerfile: Dockerfile
+      buildArgs:
+        app_name: web
+
+  local:
+    push: true
+
+manifests:
+  kustomize:
+    paths:
+      - "kustomize"
+
+
+profiles:
+  - name: cert-manager
+    deploy:
+      kubectl:
+        remoteManifests:
+          - https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.crds.yaml
+  - name: jaeger
+    deploy:
+      kubectl:
+        remoteManifests:
+          - https://github.com/jaegertracing/jaeger-operator/releases/download/v1.42.0/jaeger-operator.yaml
+  - name: redis
+    deploy:
+      helm:
+        releases:
+          - name: redis
+            wait: false
+            repo: https://charts.bitnami.com/bitnami
+            remoteChart: redis

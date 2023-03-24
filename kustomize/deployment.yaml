@@ -1,0 +1,73 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crispy-robot-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: crispy-robot-web
+  template:
+    metadata:
+      labels:
+        app: crispy-robot-web
+      annotations:
+        prometheus.io/path: /api/v1/metrics
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+    spec:
+      containers:
+        - image: ghcr.io/shipperizer/crispy-robot-web
+          name: crispy-robot-web
+          envFrom:
+            - configMapRef:
+                name: crispy-robot
+          ports:
+            - name: http
+              containerPort: 8000
+          readinessProbe:
+            httpGet:
+              path: /api/v1/status
+              port: 8000
+            initialDelaySeconds: 5
+            failureThreshold: 10
+            timeoutSeconds: 5
+            periodSeconds: 30
+          livenessProbe:
+            httpGet:
+              path: /api/v1/status
+              port: 8000
+            initialDelaySeconds: 5
+            failureThreshold: 10
+            timeoutSeconds: 5
+            periodSeconds: 30
+      imagePullSecrets:
+        - name: regcred-github
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crispy-robot-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: crispy-robot-test
+  template:
+    metadata:
+      labels:
+        app: crispy-robot-test
+      annotations:
+        prometheus.io/path: /api/v1/metrics
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+    spec:
+      containers:
+        - image: ghcr.io/shipperizer/crispy-robot-test
+          name: crispy-robot-test
+          envFrom:
+            - configMapRef:
+                name: crispy-robot
+      imagePullSecrets:
+        - name: regcred-github

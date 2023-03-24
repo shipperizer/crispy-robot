@@ -1,0 +1,11 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+commonLabels:
+  deployment: crispy-robot
+resources:
+- deployment.yaml
+- service.yaml
+- configMap.yaml
+images:
+- name: ghcr.io/shipperizer/crispy-robot
+  newTag: v0.0.1
