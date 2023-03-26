@@ -4,5 +4,8 @@ kind: ConfigMap
 metadata:
   name: crispy-robot
 data:
+  KEY_PREFIX: search
   ETCD_PASSWORD: "1MujowixEW"
   ETCD_ENDPOINTS: "etcd.default.svc.cluster.local:2379"
+  TRACING_ENDPOINTS: "tempo.default.svc.cluster.local:14268"
+

@@ -87,7 +87,7 @@ func main() {
 		}
 
 		data, _ := json.Marshal(e)
-		r, err := etcdClient.Put(context.Background(), e.UUID.String(), string(data))
+		r, err := etcdClient.Put(context.Background(), fmt.Sprintf("search.%s", e.UUID.String()), string(data))
 		logger.Sugar().Info(r, err)
 		time.Sleep(5 * time.Second)
 	}

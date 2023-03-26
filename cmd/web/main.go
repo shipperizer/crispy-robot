@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/shipperizer/crispy-robot/pkg/echo"
 	"github.com/shipperizer/crispy-robot/pkg/search"
 	"github.com/shipperizer/crispy-robot/pkg/watcher"
 
@@ -20,6 +21,7 @@ import (
 	"github.com/shipperizer/miniature-monkey/v2/core"
 	monConfig "github.com/shipperizer/miniature-monkey/v2/monitoring/config"
 	monCore "github.com/shipperizer/miniature-monkey/v2/monitoring/core"
+	"github.com/shipperizer/miniature-monkey/v2/tracing"
 	etcd "go.etcd.io/etcd/client/v3"
 	"go.uber.org/zap"
 )
@@ -67,9 +69,9 @@ func main() {
 	monitor := monCore.NewMonitor(
 		monConfig.NewMonitorConfig("web", nil, logger.Sugar()),
 	)
-	// tracer := tracing.NewTracer(
-	// 	tracing.NewTracerConfig("web", specs.TracingEndpoint, logger.Sugar()),
-	// )
+	tracer := tracing.NewTracer(
+		tracing.NewTracerConfig("web", specs.TracingEndpoint, logger.Sugar()),
+	)
 
 	etcdClient, err := etcd.New(
 		etcd.Config{
@@ -93,8 +95,8 @@ func main() {
 	apiCfg := config.NewAPIConfig(
 		"web",
 		nil,
-		nil,
-		// tracer,
+		// nil,
+		tracer,
 		monitor,
 		logger.Sugar(),
 	)
@@ -103,23 +105,24 @@ func main() {
 
 	api.RegisterBlueprints(
 		api.Router(),
-		// echo.NewBlueprint(
-		// 	echo.NewService(
-		// 		echo.NewStore(rdb, tracer),
-		// 		tracer,
-		// 	),
-		// 	tracer,
-		// ),
+		echo.NewBlueprint(
+			echo.NewService(
+				echo.NewStore(rdb, tracer),
+				tracer,
+			),
+			tracer,
+		),
 		search.NewBlueprint(
 			specs.KeyPrefix,
 			bleveIndex,
 			etcdClient,
+			tracer,
 			logger.Sugar(),
 		),
 	)
 
-	_ = watcher.NewWatcher(specs.KeyPrefix, bleveIndex, etcdClient, logger.Sugar())
-	_ = watcher.NewScanner(specs.KeyPrefix, bleveIndex, etcdClient, logger.Sugar())
+	_ = watcher.NewWatcher(specs.KeyPrefix, bleveIndex, etcdClient, tracer, logger.Sugar())
+	_ = watcher.NewScanner(specs.KeyPrefix, bleveIndex, etcdClient, tracer, logger.Sugar())
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf("0.0.0.0:%s", specs.Port),
