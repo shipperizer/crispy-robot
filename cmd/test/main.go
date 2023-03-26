@@ -78,7 +78,7 @@ func main() {
 	for i := 0; i < 1000; i++ {
 		now := time.Now()
 		e := Experiment{
-			ID:            rand.Int63n(int64(i) * 100),
+			ID:            rand.Int63n(int64(i) + 1),
 			UUID:          uuid.New(),
 			Type:          fmt.Sprintf("test-%v", i),
 			Enabled:       true,
