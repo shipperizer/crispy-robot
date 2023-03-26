@@ -4,10 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/google/uuid"
 
 	"github.com/kelseyhightower/envconfig"
 	etcd "go.etcd.io/etcd/client/v3"
@@ -18,6 +21,16 @@ type EnvSpec struct {
 	KeyPrefix     string   `envconfig:"key_prefix" default:"test"`
 	ETCDEndpoints []string `envconfig:"etcd_endpoints" default:"localhost:2379,localhost:2380"`
 	ETCDPassword  string   `envconfig:"etcd_password"` // TODO @shipperizer just getting going, need to remove for any real docs
+}
+
+type Experiment struct {
+	ID            int64      `json:"id"`
+	UUID          uuid.UUID  `json:"uuid"`
+	Type          string     `json:"type"`
+	Status        string     `json:"status"`
+	Enabled       bool       `json:"enabled"`
+	CreatedAt     *time.Time `json:"createdAt"`
+	LastUpdatedAt *time.Time `json:"lastUpdatedAt"`
 }
 
 func main() {
@@ -63,8 +76,18 @@ func main() {
 	}()
 
 	for i := 0; i < 1000; i++ {
-		data, _ := json.Marshal(map[string]string{"name": fmt.Sprintf("test.%v", i), "age": fmt.Sprint(i)})
-		r, err := etcdClient.Put(context.Background(), fmt.Sprintf("%s.%v", specs.KeyPrefix, i), string(data))
+		now := time.Now()
+		e := Experiment{
+			ID:            rand.Int63n(int64(i) * 100),
+			UUID:          uuid.New(),
+			Type:          fmt.Sprintf("test-%v", i),
+			Enabled:       true,
+			CreatedAt:     &now,
+			LastUpdatedAt: &now,
+		}
+
+		data, _ := json.Marshal(e)
+		r, err := etcdClient.Put(context.Background(), e.UUID.String(), string(data))
 		logger.Sugar().Info(r, err)
 		time.Sleep(5 * time.Second)
 	}
